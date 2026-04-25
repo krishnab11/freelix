@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('My Projects')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">My Projects</h1>
+                <p class="page-subtitle">Manage all your posted projects</p>
+            </div>
+            <a th:href="@{/client/projects/new}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>New Project
+            </a>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="section-card">
+            <div th:if="${#lists.isEmpty(projects)}" class="empty-state">
+                <i class="bi bi-folder-x"></i>
+                <p>You haven't posted any projects yet.</p>
+                <a th:href="@{/client/projects/new}" class="btn btn-primary mt-2">Post First Project</a>
+            </div>
+            <div th:unless="${#lists.isEmpty(projects)}" class="table-responsive">
+                <table class="table table-hover freelix-table">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Title</th><th>Budget</th><th>Category</th>
+                            <th>Status</th><th>Posted</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="project, iter : ${projects}">
+                            <td th:text="${iter.count}"></td>
+                            <td>
+                                <div class="fw-semibold" th:text="${project.title}"></div>
+                                <small class="text-muted" th:text="${project.category}"></small>
+                            </td>
+                            <td>₹<span th:text="${project.budget}"></span></td>
+                            <td th:text="${project.category ?: '—'}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${project.status.name() == 'OPEN'} ? 'status-open' :
+                                                      (${project.status.name() == 'IN_PROGRESS'} ? 'status-progress' :
+                                                      (${project.status.name() == 'PAID'} ? 'status-paid' : 'status-completed'))"
+                                      th:text="${project.status}"></span>
+                            </td>
+                            <td><small th:text="${#temporals.format(project.createdAt, 'dd MMM yyyy')}"></small></td>
+                            <td class="d-flex gap-1">
+                                <a th:href="@{/client/projects/{id}/applicants(id=${project.id})}"
+                                   class="btn btn-sm btn-outline-info" title="View Applicants">
+                                    <i class="bi bi-people"></i>
+                                </a>
+                                <a th:if="${project.status.name() == 'OPEN'}"
+                                   th:href="@{/client/projects/{id}/edit(id=${project.id})}"
+                                   class="btn btn-sm btn-outline-warning" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form th:if="${project.status.name() == 'OPEN'}"
+                                      th:action="@{/client/projects/{id}/delete(id=${project.id})}" method="post"
+                                      onsubmit="return confirm('Delete this project?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                <a th:if="${project.status.name() == 'IN_PROGRESS'}"
+                                   th:href="@{/chat/{id}(id=${project.id})}"
+                                   class="btn btn-sm btn-outline-primary" title="Chat">
+                                    <i class="bi bi-chat-dots"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

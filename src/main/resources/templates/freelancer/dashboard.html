@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Freelancer Dashboard')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Freelancer Dashboard</h1>
+                <p class="page-subtitle">Hello, <span th:text="${user.name}"></span>! 👋</p>
+            </div>
+            <a th:href="@{/freelancer/browse}" class="btn btn-primary">
+                <i class="bi bi-search me-2"></i>Browse Projects
+            </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card stat-blue">
+                <div class="stat-icon"><i class="bi bi-file-earmark-text"></i></div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${totalApplications}">0</div>
+                    <div class="stat-label">Total Applications</div>
+                </div>
+            </div>
+            <div class="stat-card stat-yellow">
+                <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${pendingApplications}">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+            <div class="stat-card stat-green">
+                <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${activeProjects}">0</div>
+                    <div class="stat-label">Active Projects</div>
+                </div>
+            </div>
+            <div class="stat-card stat-purple">
+                <div class="stat-icon"><i class="bi bi-trophy"></i></div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${completedProjects}">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rating Card -->
+        <div th:if="${user.totalReviews != null and user.totalReviews > 0}" class="section-card mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rating-circle">
+                    <span th:text="${user.averageRating}"></span>
+                    <small>/ 5</small>
+                </div>
+                <div>
+                    <h5 class="mb-0">Your Rating</h5>
+                    <p class="text-muted mb-0">Based on <span th:text="${user.totalReviews}"></span> review(s)</p>
+                    <div class="text-warning">
+                        <i th:each="i : ${#numbers.sequence(1, 5)}"
+                           th:class="${user.averageRating != null and i <= user.averageRating} ? 'bi bi-star-fill' : 'bi bi-star'"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Applications -->
+        <div class="section-card">
+            <div class="section-header">
+                <h3><i class="bi bi-clock-history me-2"></i>Recent Applications</h3>
+                <a th:href="@{/freelancer/applications}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div th:if="${#lists.isEmpty(recentApplications)}" class="empty-state">
+                <i class="bi bi-search"></i>
+                <p>No applications yet. Browse projects and apply!</p>
+            </div>
+            <div th:unless="${#lists.isEmpty(recentApplications)}" class="table-responsive">
+                <table class="table table-hover freelix-table">
+                    <thead><tr><th>Project</th><th>Bid</th><th>Status</th><th>Applied</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr th:each="app : ${recentApplications}">
+                            <td class="fw-semibold" th:text="${app.project.title}"></td>
+                            <td>₹<span th:text="${app.bidAmount}"></span></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${app.status?.name() == 'ACCEPTED'} ? 'status-paid' :
+                                                      (${app.status?.name() == 'PENDING'} ? 'status-open' : 'status-completed')"
+                                      th:text="${app.status}"></span>
+                            </td>
+                            <td><small th:text="${#temporals.format(app.createdAt, 'dd MMM yyyy')}"></small></td>
+                            <td>
+                                <a th:if="${app.status.name() == 'ACCEPTED'}"
+                                   th:href="@{/chat/{id}(id=${app.project.id})}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-chat-dots"></i> Chat
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reviews -->
+        <div th:unless="${#lists.isEmpty(reviews)}" class="section-card mt-4">
+            <h3><i class="bi bi-star-fill text-warning me-2"></i>Reviews</h3>
+            <div th:each="review : ${reviews}" class="review-item">
+                <div class="d-flex justify-content-between">
+                    <div class="fw-semibold" th:text="${review.project.title}"></div>
+                    <div class="text-warning">
+                        <i th:each="i : ${#numbers.sequence(1,5)}"
+                           th:class="${i <= review.rating} ? 'bi bi-star-fill' : 'bi bi-star'"></i>
+                    </div>
+                </div>
+                <p class="text-muted small mb-0" th:text="${review.feedback}"></p>
+                <small class="text-muted" th:text="'— ' + ${review.client.name}"></small>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Invoice')}"></head>
+<body>
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        .app-layout { display: block !important; }
+        .sidebar { display: none !important; }
+        .main-content { margin-left: 0 !important; padding: 0 !important; }
+    }
+</style>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header no-print">
+            <div>
+                <h1 class="page-title">Invoice</h1>
+                <p class="page-subtitle" th:text="${payment.invoiceNumber}"></p>
+            </div>
+            <div class="d-flex gap-2 no-print">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer me-2"></i>Print Invoice
+                </button>
+                <a th:href="@{/client/projects}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back
+                </a>
+            </div>
+        </div>
+
+        <div class="invoice-wrapper">
+            <!-- Invoice Header -->
+            <div class="invoice-header">
+                <div>
+                    <div class="invoice-brand">
+                        <i class="bi bi-lightning-charge-fill me-2 text-primary"></i>Freelix
+                    </div>
+                    <p class="text-muted mb-0">Freelancer Marketplace</p>
+                </div>
+                <div class="text-end">
+                    <h2 class="text-primary mb-0">INVOICE</h2>
+                    <p class="fw-semibold" th:text="${payment.invoiceNumber}"></p>
+                    <p class="text-muted small">
+                        Date: <span th:text="${#temporals.format(payment.paidAt, 'dd MMMM yyyy')}"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Parties -->
+            <div class="row g-4 my-3">
+                <div class="col-md-6">
+                    <div class="invoice-party">
+                        <div class="invoice-party-label">BILL FROM</div>
+                        <div class="fw-bold fs-5" th:text="${freelancer.name}"></div>
+                        <div class="text-muted" th:text="${freelancer.email}"></div>
+                        <div th:if="${freelancer.location}" th:text="${freelancer.location}"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="invoice-party">
+                        <div class="invoice-party-label">BILL TO</div>
+                        <div class="fw-bold fs-5" th:text="${client.name}"></div>
+                        <div class="text-muted" th:text="${client.email}"></div>
+                        <div th:if="${client.location}" th:text="${client.location}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <table class="table invoice-table">
+                <thead>
+                    <tr><th>Description</th><th>Category</th><th>Qty</th><th class="text-end">Amount</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="fw-semibold" th:text="${project.title}"></div>
+                            <small class="text-muted" th:text="${#strings.abbreviate(project.description, 80)}"></small>
+                        </td>
+                        <td th:text="${project.category ?: 'Freelance Service'}"></td>
+                        <td>1</td>
+                        <td class="text-end fw-bold">₹<span th:text="${#numbers.formatDecimal(payment.amount,1,2)}"></span></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-end fw-semibold">Platform Fee (0%)</td>
+                        <td class="text-end">₹0.00</td>
+                    </tr>
+                    <tr class="invoice-total">
+                        <td colspan="3" class="text-end fw-bold fs-5">TOTAL</td>
+                        <td class="text-end fw-bold fs-5 text-success">
+                            ₹<span th:text="${#numbers.formatDecimal(payment.amount,1,2)}"></span>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Status -->
+            <div class="invoice-status">
+                <span class="badge bg-success fs-6">
+                    <i class="bi bi-check-circle me-2"></i>PAID — <span th:text="${payment.paymentMethod}"></span>
+                </span>
+            </div>
+
+            <div class="invoice-footer">
+                <p>Thank you for using <strong>Freelix</strong>. This is a simulated payment invoice.</p>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

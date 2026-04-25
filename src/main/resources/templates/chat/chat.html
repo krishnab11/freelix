@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Chat')}"></head>
+<body>
+<style>
+.chat-wrapper { display:flex; flex-direction:column; height:calc(100vh - 180px); min-height:400px; }
+.chat-messages { flex:1; overflow-y:auto; padding:1rem 1.25rem; display:flex; flex-direction:column; gap:0.85rem; }
+.chat-input-bar { padding:.85rem 1.25rem; border-top:1px solid var(--border-color); background:var(--surface-color); border-radius: 0 0 var(--radius) var(--radius); }
+
+/* Bubble enhancements */
+.chat-bubble { position:relative; }
+.bubble-attachment { margin-top:.5rem; }
+.bubble-attachment img { max-width:220px; border-radius:.5rem; cursor:pointer; }
+.bubble-attachment .pdf-link { display:inline-flex; align-items:center; gap:.4rem;
+    padding:.35rem .7rem; border-radius:.5rem; background:rgba(99,102,241,.1); color:var(--primary);
+    font-size:.82rem; text-decoration:none; }
+.bubble-attachment .pdf-link:hover { background:rgba(99,102,241,.2); }
+
+/* Reaction pill */
+.reaction-pill {
+    position:absolute; bottom:-10px; right:6px;
+    background:var(--surface-color); border:1px solid var(--border-color);
+    border-radius:999px; padding:1px 7px; font-size:.9rem; cursor:pointer;
+    box-shadow:0 1px 4px rgba(0,0,0,.12); line-height:1.5;
+    transition:transform .15s;
+}
+.reaction-pill:hover { transform:scale(1.2); }
+
+/* Reaction picker popup */
+.emoji-picker-popup {
+    position:absolute; bottom:30px; right:0;
+    background:var(--surface-color); border:1px solid var(--border-color);
+    border-radius:.75rem; padding:.5rem; display:flex; gap:.4rem;
+    box-shadow:0 4px 20px rgba(0,0,0,.15); z-index:100;
+    opacity:0; pointer-events:none; transform:translateY(6px);
+    transition:opacity .15s, transform .15s;
+}
+.emoji-picker-popup.open { opacity:1; pointer-events:all; transform:translateY(0); }
+.emoji-picker-popup span { font-size:1.3rem; cursor:pointer; padding:.15rem .2rem;
+    border-radius:.4rem; transition:background .1s; }
+.emoji-picker-popup span:hover { background:rgba(99,102,241,.12); }
+
+/* Attach preview */
+#attachPreview { display:none; align-items:center; gap:.5rem;
+    padding:.35rem .7rem; background:rgba(99,102,241,.08);
+    border-radius:.5rem; font-size:.82rem; color:var(--primary); }
+</style>
+
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Project Chat</h1>
+                <p class="page-subtitle" th:text="${project.title}"></p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/messages" class="btn btn-outline-secondary btn-sm me-1">
+                    <i class="bi bi-arrow-left me-1"></i>All Chats
+                </a>
+                <div class="avatar-circle" th:text="${other != null ? other.name.substring(0,1) : '?'}"></div>
+                <span class="fw-semibold" th:text="${other != null ? other.name : 'No partner yet'}"></span>
+            </div>
+        </div>
+
+        <div class="section-card p-0 chat-wrapper">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Existing messages -->
+                <div th:each="msg : ${messages}"
+                     th:id="'msg-' + ${msg.id}"
+                     th:classappend="${msg.sender.id == user.id} ? 'd-flex flex-row-reverse' : 'd-flex'"
+                     class="align-items-end gap-2 msg-row">
+                    <div class="avatar-circle avatar-sm"
+                         th:text="${msg.sender.name.substring(0,1)}"></div>
+                    <div style="position:relative;max-width:70%;min-width:80px;">
+                        <div th:classappend="${msg.sender.id == user.id} ? 'bubble-sent' : 'bubble-received'"
+                             class="chat-bubble">
+                            <!-- text content -->
+                            <div th:if="${msg.content != null and !#strings.isEmpty(msg.content)}"
+                                 th:text="${msg.content}"></div>
+                            <!-- attachment -->
+                            <div class="bubble-attachment" th:if="${msg.attachmentUrl != null}">
+                                <img th:if="${msg.attachmentName != null and (#strings.containsIgnoreCase(msg.attachmentName,'.jpg') or #strings.containsIgnoreCase(msg.attachmentName,'.jpeg') or #strings.containsIgnoreCase(msg.attachmentName,'.png') or #strings.containsIgnoreCase(msg.attachmentName,'.gif') or #strings.containsIgnoreCase(msg.attachmentName,'.webp'))}"
+                                     th:src="${msg.attachmentUrl}" alt="Image"/>
+                                <a th:unless="${msg.attachmentName != null and (#strings.containsIgnoreCase(msg.attachmentName,'.jpg') or #strings.containsIgnoreCase(msg.attachmentName,'.jpeg') or #strings.containsIgnoreCase(msg.attachmentName,'.png') or #strings.containsIgnoreCase(msg.attachmentName,'.gif') or #strings.containsIgnoreCase(msg.attachmentName,'.webp'))}"
+                                   th:href="${msg.attachmentUrl}" target="_blank" class="pdf-link">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                    <span th:text="${msg.attachmentName}"></span>
+                                </a>
+                            </div>
+                            <small class="bubble-time" th:text="${#temporals.format(msg.sentAt, 'HH:mm')}"></small>
+                        </div>
+                        <!-- Reaction pill -->
+                        <div class="reaction-pill" th:if="${msg.reaction != null}"
+                             th:text="${msg.reaction}"
+                             th:attr="data-msg-id=${msg.id}"></div>
+                        <!-- Emoji picker -->
+                        <div class="emoji-picker-popup" th:id="'ep-' + ${msg.id}">
+                            <span th:each="e : ${ {'👍','❤️','😂','😮','😢','🔥'} }"
+                                  th:text="${e}"
+                                  th:attr="data-msg-id=${msg.id}, data-emoji=${e}"
+                                  onclick="sendReaction(this)"></span>
+                        </div>
+                        <!-- Reaction trigger button -->
+                        <button class="btn btn-link p-0 react-btn"
+                                th:attr="data-id=${msg.id}"
+                                onclick="toggleEmojiPicker(this)"
+                                style="font-size:.75rem;color:var(--text-muted,#888);opacity:0;transition:opacity .2s;">
+                            😊
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input area -->
+            <div class="chat-input-bar" th:if="${other != null}">
+                <!-- Attach preview bar -->
+                <div id="attachPreview" class="mb-2 d-flex">
+                    <i class="bi bi-paperclip"></i>
+                    <span id="attachName"></span>
+                    <button type="button" class="btn btn-link btn-sm p-0 ms-2 text-danger" onclick="clearAttach()">✕</button>
+                </div>
+                <form id="chatForm" class="d-flex gap-2" enctype="multipart/form-data">
+                    <!-- Hidden file input -->
+                    <input type="file" id="fileInput" accept="image/*,.pdf" style="display:none" onchange="onFileSelected(this)"/>
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('fileInput').click()">
+                        <i class="bi bi-paperclip"></i>
+                    </button>
+                    <input type="text" id="messageInput" class="form-control"
+                           placeholder="Type a message..." autocomplete="off"/>
+                    <button type="submit" class="btn btn-primary px-4" id="sendBtn">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="chat-input-bar" th:unless="${other != null}">
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Chat will be available once a freelancer is assigned.
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+<script th:inline="javascript">
+    const projectId = [[${project.id}]];
+    const receiverId = [[${other != null ? other.id : 0}]];
+    const currentUserId = [[${user.id}]];
+    let lastId = [[${lastId}]];
+</script>
+<script th:src="@{/js/chat.js}"></script>
+<script>
+/* ── Hover to reveal react button ──────────────────────────────── */
+document.querySelectorAll('.msg-row').forEach(row => {
+    row.addEventListener('mouseenter', () => {
+        row.querySelectorAll('.react-btn').forEach(b => b.style.opacity = '1');
+    });
+    row.addEventListener('mouseleave', () => {
+        row.querySelectorAll('.react-btn').forEach(b => b.style.opacity = '0');
+    });
+});
+
+function toggleEmojiPicker(btn) {
+    const id = btn.getAttribute('data-id');
+    const picker = document.getElementById('ep-' + id);
+    picker.classList.toggle('open');
+    // close others
+    document.querySelectorAll('.emoji-picker-popup.open').forEach(p => {
+        if (p !== picker) p.classList.remove('open');
+    });
+}
+
+function sendReaction(span) {
+    const msgId = span.getAttribute('data-msg-id');
+    const emoji = span.getAttribute('data-emoji');
+    fetch('/chat/react', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `messageId=${msgId}&emoji=${encodeURIComponent(emoji)}`
+    }).then(r => r.json()).then(msg => {
+        // Update or create reaction pill
+        let row = document.getElementById('msg-' + msgId);
+        if (row) {
+            let pill = row.querySelector('.reaction-pill');
+            if (!pill) {
+                pill = document.createElement('div');
+                pill.className = 'reaction-pill';
+                row.querySelector('[style*="position:relative"]').appendChild(pill);
+            }
+            pill.textContent = emoji;
+        }
+        // Close picker
+        document.querySelectorAll('.emoji-picker-popup.open').forEach(p => p.classList.remove('open'));
+    });
+}
+
+/* ── File attach ────────────────────────────────────────────────── */
+function onFileSelected(input) {
+    if (input.files.length > 0) {
+        document.getElementById('attachPreview').style.display = 'flex';
+        document.getElementById('attachName').textContent = input.files[0].name;
+    }
+}
+function clearAttach() {
+    document.getElementById('fileInput').value = '';
+    document.getElementById('attachPreview').style.display = 'none';
+    document.getElementById('attachName').textContent = '';
+}
+</script>
+</body>
+</html>

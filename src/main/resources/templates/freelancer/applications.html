@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('My Applications')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">My Applications</h1>
+                <p class="page-subtitle">Track all your proposals</p>
+            </div>
+            <a th:href="@{/freelancer/browse}" class="btn btn-primary">
+                <i class="bi bi-search me-2"></i>Browse More
+            </a>
+        </div>
+
+        <div class="section-card">
+            <div th:if="${#lists.isEmpty(applications)}" class="empty-state">
+                <i class="bi bi-file-earmark-x"></i>
+                <p>No applications yet. Start browsing projects!</p>
+                <a th:href="@{/freelancer/browse}" class="btn btn-primary mt-2">Browse Projects</a>
+            </div>
+            <div th:unless="${#lists.isEmpty(applications)}" class="table-responsive">
+                <table class="table table-hover freelix-table">
+                    <thead>
+                        <tr><th>#</th><th>Project</th><th>Client</th><th>Bid</th>
+                            <th>Days</th><th>Status</th><th>Applied</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="app, iter : ${applications}">
+                            <td th:text="${iter.count}"></td>
+                            <td>
+                                <div class="fw-semibold" th:text="${app.project.title}"></div>
+                                <small class="text-muted" th:text="${app.project.category}"></small>
+                            </td>
+                            <td th:text="${app.project.client.name}"></td>
+                            <td class="text-success fw-bold">₹<span th:text="${app.bidAmount}"></span></td>
+                            <td th:text="${app.estimatedDays != null} ? ${app.estimatedDays} + 'd' : '—'"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${app.status.name() == 'ACCEPTED'} ? 'status-paid' :
+                                                      (${app.status.name() == 'PENDING'} ? 'status-open' : 'status-completed')"
+                                      th:text="${app.status}"></span>
+                            </td>
+                            <td><small th:text="${#temporals.format(app.createdAt, 'dd MMM yyyy')}"></small></td>
+                            <td>
+                                <a th:if="${app.status.name() == 'ACCEPTED'}"
+                                   th:href="@{/chat/{id}(id=${app.project.id})}"
+                                   class="btn btn-sm btn-primary">
+                                    <i class="bi bi-chat-dots"></i> Chat
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

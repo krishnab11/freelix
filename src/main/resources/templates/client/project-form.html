@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Project Form')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" th:text="${isEdit} ? 'Edit Project' : 'Post New Project'">Post Project</h1>
+                <p class="page-subtitle" th:text="${isEdit} ? 'Update project details' : 'Fill in the details to find the right freelancer'"></p>
+            </div>
+            <a th:href="@{/client/projects}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back
+            </a>
+        </div>
+
+        <div class="section-card" style="max-width:700px">
+            <form th:action="${isEdit} ? @{/client/projects/{id}/edit(id=${projectId})} : @{/client/projects/new}"
+                  th:object="${projectDto}" method="post" novalidate>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Project Title *</label>
+                    <input type="text" th:field="*{title}" class="form-control"
+                           th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
+                           placeholder="e.g. Build a React E-commerce Website"/>
+                    <div class="invalid-feedback" th:errors="*{title}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Description *</label>
+                    <textarea th:field="*{description}" rows="5" class="form-control"
+                              th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"
+                              placeholder="Describe what you need in detail..."></textarea>
+                    <div class="invalid-feedback" th:errors="*{description}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Budget (INR) *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" th:field="*{budget}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('budget')} ? 'is-invalid'"
+                                   placeholder="500" min="1" step="0.01"/>
+                            <div class="invalid-feedback" th:errors="*{budget}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Category</label>
+                        <select th:field="*{category}" class="form-select">
+                            <option value="">Select category</option>
+                            <option value="Web Development">Web Development</option>
+                            <option value="Mobile Development">Mobile Development</option>
+                            <option value="Design">Design / UI-UX</option>
+                            <option value="Writing">Writing / Content</option>
+                            <option value="Data Science">Data Science / AI</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="DevOps">DevOps / Cloud</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Required Skills</label>
+                        <input type="text" th:field="*{skills}" class="form-control"
+                               placeholder="e.g. React, Node.js, PostgreSQL"/>
+                        <small class="text-muted">Comma-separated</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Deadline</label>
+                        <input type="date" th:field="*{deadline}" class="form-control"/>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                    <button type="submit" id="submitProjectBtn" class="btn btn-primary px-4">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <span th:text="${isEdit} ? 'Update Project' : 'Post Project'"></span>
+                    </button>
+                    <a th:href="@{/client/projects}" class="btn btn-outline-secondary px-4">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

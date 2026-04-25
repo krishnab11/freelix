@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Apply for Project')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Submit Proposal</h1>
+                <p class="page-subtitle" th:text="${project.title}"></p>
+            </div>
+            <a th:href="@{/freelancer/browse}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-7">
+                <div class="section-card">
+                    <h5><i class="bi bi-send me-2"></i>Your Proposal</h5>
+                    <form th:action="@{/freelancer/projects/{id}/apply(id=${project.id})}"
+                          th:object="${applicationDto}" method="post" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Cover Letter *</label>
+                            <textarea th:field="*{proposal}" rows="7" class="form-control"
+                                      th:classappend="${#fields.hasErrors('proposal')} ? 'is-invalid'"
+                                      placeholder="Introduce yourself and explain why you're the best fit..."></textarea>
+                            <div class="invalid-feedback" th:errors="*{proposal}"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Your Bid (INR) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" th:field="*{bidAmount}" class="form-control"
+                                           th:classappend="${#fields.hasErrors('bidAmount')} ? 'is-invalid'"
+                                           placeholder="400" min="1" step="0.01"/>
+                                    <div class="invalid-feedback" th:errors="*{bidAmount}"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Estimated Days</label>
+                                <input type="number" th:field="*{estimatedDays}" class="form-control"
+                                       placeholder="14" min="1"/>
+                            </div>
+                        </div>
+                        <button type="submit" id="submitProposalBtn" class="btn btn-primary px-4">
+                            <i class="bi bi-send me-2"></i>Submit Proposal
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="section-card">
+                    <h5><i class="bi bi-info-circle me-2"></i>Project Details</h5>
+                    <div class="detail-row"><span class="detail-label">Budget</span>
+                        <span class="text-success fw-bold">₹<span th:text="${project.budget}"></span></span></div>
+                    <div class="detail-row"><span class="detail-label">Category</span>
+                        <span th:text="${project.category ?: '—'}"></span></div>
+                    <div class="detail-row"><span class="detail-label">Deadline</span>
+                        <span th:text="${project.deadline ?: '—'}"></span></div>
+                    <div class="detail-row"><span class="detail-label">Client</span>
+                        <span th:text="${project.client.name}"></span></div>
+                    <hr/>
+                    <p th:text="${project.description}"></p>
+                    <div th:if="${project.skills}" class="skills-row">
+                        <span th:each="skill : ${#strings.arraySplit(project.skills, ',')}"
+                              class="skill-badge" th:text="${#strings.trim(skill)}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

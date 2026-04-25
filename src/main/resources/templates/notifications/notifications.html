@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Notifications')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title"><i class="bi bi-bell-fill me-2" style="color:var(--primary)"></i>Notification Center</h1>
+                <p class="page-subtitle">Stay updated on every activity</p>
+            </div>
+            <button class="btn btn-outline-primary btn-sm" id="markAllReadBtn">
+                <i class="bi bi-check2-all me-1"></i>Mark all read
+            </button>
+        </div>
+
+        <div class="section-card" id="notificationsContainer">
+            <!-- Empty state -->
+            <div th:if="${#lists.isEmpty(notifications)}" class="text-center py-5">
+                <div style="font-size:4rem;margin-bottom:1rem;">🔔</div>
+                <h5 class="fw-semibold mb-1">You're all caught up!</h5>
+                <p class="text-muted">No notifications yet. We'll let you know when something happens.</p>
+            </div>
+
+            <!-- Notification list -->
+            <div th:unless="${#lists.isEmpty(notifications)}" class="notification-list">
+                <div th:each="n : ${notifications}"
+                     th:classappend="${!n.isRead} ? 'unread' : ''"
+                     class="notification-item d-flex align-items-start gap-3">
+
+                    <!-- Icon by type -->
+                    <div class="notif-icon"
+                         th:classappend="${n.type.name() == 'NEW_APPLICATION'} ? 'notif-blue' :
+                                         (${n.type.name() == 'APPLICATION_ACCEPTED'} ? 'notif-green' :
+                                         (${n.type.name() == 'APPLICATION_REJECTED'} ? 'notif-red' :
+                                         (${n.type.name() == 'PAYMENT_RELEASED'} ? 'notif-gold' : 'notif-blue')))">
+                        <i class="bi"
+                           th:classappend="${n.type.name() == 'NEW_APPLICATION'} ? 'bi-file-earmark-person' :
+                                           (${n.type.name() == 'APPLICATION_ACCEPTED'} ? 'bi-check-circle-fill' :
+                                           (${n.type.name() == 'APPLICATION_REJECTED'} ? 'bi-x-circle-fill' :
+                                           (${n.type.name() == 'PAYMENT_RELEASED'} ? 'bi-cash-stack' : 'bi-chat-dots')))"></i>
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <p class="notif-message mb-1" th:text="${n.message}"></p>
+                        <small class="text-muted" th:text="${#temporals.format(n.createdAt, 'MMM d, yyyy • HH:mm')}"></small>
+                    </div>
+
+                    <div th:if="${n.link != null}" class="ms-auto">
+                        <a th:href="${n.link}" class="btn btn-sm btn-outline-secondary">View</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+.notification-list { display:flex; flex-direction:column; gap:0; }
+.notification-item {
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+.notification-item:last-child { border-bottom: none; }
+.notification-item.unread { background: rgba(99,102,241,.05); }
+.notification-item:hover { background: rgba(99,102,241,.07); }
+.notif-icon {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+}
+.notif-blue  { background: rgba(59,130,246,.15); color:#3b82f6; }
+.notif-green { background: rgba(34,197,94,.15);  color:#22c55e; }
+.notif-red   { background: rgba(239,68,68,.15);  color:#ef4444; }
+.notif-gold  { background: rgba(234,179,8,.15);  color:#ca8a04; }
+.notif-message { font-size:.95rem; line-height:1.4; margin-bottom:0; }
+</style>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+<script>
+document.getElementById('markAllReadBtn')?.addEventListener('click', function() {
+    fetch('/notifications/mark-read', { method:'POST',
+        headers:{'X-CSRF-TOKEN': document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] || ''} })
+    .then(() => {
+        document.querySelectorAll('.notification-item.unread').forEach(el => el.classList.remove('unread'));
+        this.disabled = true;
+        this.innerHTML = '<i class="bi bi-check2-all me-1"></i>All read';
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Messages')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title"><i class="bi bi-chat-dots-fill me-2" style="color:var(--primary)"></i>Messages</h1>
+                <p class="page-subtitle">All your conversations in one place</p>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${#lists.isEmpty(conversations)}" class="section-card text-center py-5">
+            <div style="font-size:4rem;margin-bottom:1rem;">💬</div>
+            <h5 class="fw-semibold mb-1">No conversations yet</h5>
+            <p class="text-muted">Once a project is assigned and you start chatting, your conversations will appear here.</p>
+        </div>
+
+        <!-- Conversation list -->
+        <div th:unless="${#lists.isEmpty(conversations)}" class="section-card p-0">
+            <div class="conversation-list">
+                <a th:each="conv : ${conversations}"
+                   th:href="@{/chat/{id}(id=${conv.projectId})}"
+                   class="conversation-item d-flex align-items-center gap-3 text-decoration-none"
+                   th:classappend="${conv.unreadCount > 0} ? 'has-unread' : ''">
+
+                    <!-- Avatar -->
+                    <div class="conv-avatar">
+                        <img th:if="${conv.otherUserAvatar != null}"
+                             th:src="${conv.otherUserAvatar}"
+                             class="conv-avatar-img" alt="avatar"/>
+                        <div th:unless="${conv.otherUserAvatar != null}"
+                             class="conv-avatar-fallback"
+                             th:text="${conv.otherUserName != null ? conv.otherUserName.substring(0,1).toUpperCase() : '?'}"></div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex justify-content-between align-items-baseline">
+                            <span class="conv-name fw-semibold" th:text="${conv.otherUserName}"></span>
+                            <small class="conv-time text-muted ms-2 flex-shrink-0"
+                                   th:text="${conv.lastMessageAt != null ? #temporals.format(conv.lastMessageAt, 'MMM d') : ''}"></small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <p class="conv-preview text-muted mb-0" th:text="${conv.lastMessagePreview}"></p>
+                            <span th:if="${conv.unreadCount > 0}"
+                                  class="conv-badge" th:text="${conv.unreadCount}"></span>
+                        </div>
+                        <small class="conv-project text-muted" th:if="${conv.projectTitle != null}">
+                            <i class="bi bi-folder2-open me-1"></i><span th:text="${conv.projectTitle}"></span>
+                        </small>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+.conversation-list { display:flex; flex-direction:column; }
+.conversation-item {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.18s;
+    color: var(--text-color);
+}
+.conversation-item:last-child { border-bottom: none; }
+.conversation-item:hover { background: rgba(99,102,241,.06); }
+.conversation-item.has-unread { background: rgba(99,102,241,.05); }
+.conversation-item.has-unread .conv-name { color: var(--primary); }
+.conv-avatar { position:relative; flex-shrink:0; }
+.conv-avatar-img { width:50px; height:50px; border-radius:50%; object-fit:cover; }
+.conv-avatar-fallback {
+    width:50px; height:50px; border-radius:50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark, #4f46e5));
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:1.2rem; font-weight:700;
+}
+.conv-name { font-size:.97rem; }
+.conv-preview { font-size:.875rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px; }
+.conv-project { font-size:.78rem; }
+.conv-time { font-size:.8rem; }
+.conv-badge {
+    background: var(--primary); color:#fff;
+    border-radius:999px; padding:1px 8px; font-size:.75rem; font-weight:600; flex-shrink:0;
+}
+</style>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

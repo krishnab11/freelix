@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Applicants')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Applicants</h1>
+                <p class="page-subtitle" th:text="${project.title}"></p>
+            </div>
+            <a th:href="@{/client/projects}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Projects
+            </a>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <!-- Project Info Card -->
+        <div class="section-card mb-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h4 th:text="${project.title}"></h4>
+                    <p class="text-muted mb-1" th:text="${project.description}"></p>
+                    <span class="badge bg-success me-1">₹<span th:text="${project.budget}"></span></span>
+                    <span class="badge bg-secondary" th:text="${project.category}"></span>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <!-- Pay Button -->
+                    <form th:if="${project.status.name() == 'IN_PROGRESS' and payment == null}"
+                          th:action="@{/payment/pay/{id}(id=${project.id})}" method="post"
+                          onsubmit="return confirm('Process payment of ₹' + '[[${project.budget}]]' + '?')">
+                        <button type="submit" id="payBtn" class="btn btn-success">
+                            <i class="bi bi-credit-card me-2"></i>Pay Freelancer
+                        </button>
+                    </form>
+                    <a th:if="${payment != null}" th:href="@{/payment/invoice/{id}(id=${payment.id})}"
+                       class="btn btn-outline-success">
+                        <i class="bi bi-receipt me-2"></i>View Invoice
+                    </a>
+                    <!-- Chat Button -->
+                    <a th:if="${project.status.name() == 'IN_PROGRESS' or project.status.name() == 'COMPLETED' or project.status.name() == 'PAID'}"
+                       th:href="@{/chat/{id}(id=${project.id})}" class="btn btn-outline-primary">
+                        <i class="bi bi-chat-dots me-2"></i>Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Form -->
+        <div th:if="${project.status.name() == 'PAID' and !hasReview}" class="section-card mb-4">
+            <h5><i class="bi bi-star me-2 text-warning"></i>Leave a Review</h5>
+            <form th:action="@{/review/submit}" method="post">
+                <input type="hidden" name="projectId" th:value="${project.id}"/>
+                <div class="mb-3">
+                    <label class="form-label">Rating</label>
+                    <div class="d-flex gap-2">
+                        <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="rating"
+                                       th:id="'star' + ${i}" th:value="${i}" required/>
+                                <label class="form-check-label" th:for="'star' + ${i}"
+                                       th:text="${i} + ' ⭐'"></label>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <textarea name="feedback" class="form-control" rows="3"
+                              placeholder="Share your experience with this freelancer..."></textarea>
+                </div>
+                <button type="submit" id="submitReviewBtn" class="btn btn-warning">
+                    <i class="bi bi-star-fill me-2"></i>Submit Review
+                </button>
+            </form>
+        </div>
+
+        <!-- Applications Table -->
+        <div class="section-card">
+            <h5 class="mb-3"><i class="bi bi-people me-2"></i>
+                Applications (<span th:text="${#lists.size(applications)}"></span>)
+            </h5>
+            <div th:if="${#lists.isEmpty(applications)}" class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <p>No applications yet. Share your project to attract freelancers!</p>
+            </div>
+            <div th:unless="${#lists.isEmpty(applications)}">
+                <div th:each="app : ${applications}" class="applicant-card"
+                     th:classappend="${app.status.name() == 'ACCEPTED'} ? 'applicant-accepted'">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                        <div class="d-flex gap-3 align-items-center">
+                            <div class="avatar-circle" th:text="${app.freelancer.name.substring(0,1)}"></div>
+                            <div>
+                                <div class="fw-bold" th:text="${app.freelancer.name}"></div>
+                                <small class="text-muted" th:text="${app.freelancer.email}"></small>
+                                <div th:if="${app.freelancer.averageRating > 0}" class="text-warning small">
+                                    ⭐ <span th:text="${app.freelancer.averageRating}"></span>
+                                    (<span th:text="${app.freelancer.totalReviews}"></span> reviews)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="h5 mb-0 text-success">₹<span th:text="${app.bidAmount}"></span></div>
+                            <small class="text-muted" th:text="${app.estimatedDays != null} ? ${app.estimatedDays} + ' days' : ''"></small>
+                            <div class="mt-1">
+                                <span class="status-badge"
+                                      th:classappend="${app.status.name() == 'ACCEPTED'} ? 'status-paid' :
+                                                      (${app.status.name() == 'PENDING'} ? 'status-open' : 'status-completed')"
+                                      th:text="${app.status}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 p-3 applicant-proposal-box rounded">
+                        <strong>Proposal:</strong>
+                        <p class="mb-0 mt-1" th:text="${app.proposal}"></p>
+                    </div>
+                    <div th:if="${app.status.name() == 'PENDING'}" class="mt-2 d-flex gap-2 flex-wrap">
+                        <a th:href="@{/profile/view/{id}(id=${app.freelancer.id})}" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-person-badge me-1"></i>View Profile
+                        </a>
+                        <form th:action="@{/client/projects/{pid}/accept/{aid}(pid=${project.id},aid=${app.id})}" method="post">
+                            <button type="submit" id="acceptBtn" class="btn btn-success btn-sm">
+                                <i class="bi bi-check-circle me-1"></i>Accept
+                            </button>
+                        </form>
+                        <form th:action="@{/client/projects/{pid}/reject/{aid}(pid=${project.id},aid=${app.id})}" method="post">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-x-circle me-1"></i>Reject
+                            </button>
+                        </form>
+                    </div>
+                    <div th:unless="${app.status.name() == 'PENDING'}" class="mt-2">
+                        <a th:href="@{/profile/view/{id}(id=${app.freelancer.id})}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-person-badge me-1"></i>View Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

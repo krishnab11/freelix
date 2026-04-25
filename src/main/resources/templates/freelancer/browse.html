@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Browse Projects')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Browse Projects</h1>
+                <p class="page-subtitle">Find your next opportunity</p>
+            </div>
+        </div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div th:if="${#lists.isEmpty(projects)}" class="empty-state section-card">
+            <i class="bi bi-inbox"></i>
+            <p>No open projects available right now. Check back soon!</p>
+        </div>
+        <div class="project-grid">
+            <div th:each="project : ${projects}" class="project-browse-card">
+                <div class="project-card-header">
+                    <span class="project-category" th:text="${project.category ?: 'General'}"></span>
+                    <span class="project-budget">₹<span th:text="${project.budget}"></span></span>
+                </div>
+                <h4 class="project-card-title" th:text="${project.title}"></h4>
+                <p class="project-card-desc" th:text="${#strings.abbreviate(project.description, 120)}"></p>
+                <div class="project-card-meta">
+                    <span><i class="bi bi-person me-1"></i><span th:text="${project.client.name}"></span></span>
+                    <span><i class="bi bi-calendar me-1"></i>
+                        <span th:text="${#temporals.format(project.createdAt, 'dd MMM yyyy')}"></span>
+                    </span>
+                </div>
+                <div th:if="${project.skills}" class="skills-row">
+                    <span th:each="skill : ${#strings.arraySplit(project.skills, ',')}"
+                          class="skill-badge" th:text="${#strings.trim(skill)}"></span>
+                </div>
+                <div class="project-card-footer">
+                    <a th:href="@{/freelancer/projects/{id}/apply(id=${project.id})}"
+                       th:if="${!appliedIds.contains(project.id)}"
+                       class="btn btn-primary btn-sm">
+                        <i class="bi bi-send me-1"></i>Apply Now
+                    </a>
+                    <span th:if="${appliedIds.contains(project.id)}"
+                          class="badge bg-success"><i class="bi bi-check me-1"></i>Applied</span>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

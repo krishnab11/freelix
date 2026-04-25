@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Register')}"></head>
+<body class="auth-body">
+<div class="auth-container">
+    <div class="auth-card" style="max-width:480px">
+        <div class="auth-logo">
+            <i class="bi bi-lightning-charge-fill"></i>
+            <span>Freelix</span>
+        </div>
+        <h2 class="auth-title">Create Account</h2>
+        <p class="auth-subtitle">Join thousands of clients and freelancers</p>
+
+        <div th:if="${error}" class="alert alert-danger">
+            <i class="bi bi-exclamation-circle me-2"></i><span th:text="${error}"></span>
+        </div>
+
+        <form th:action="@{/register}" th:object="${registerDto}" method="post" novalidate>
+            <div class="mb-3">
+                <label class="form-label">Full Name</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" th:field="*{name}" class="form-control"
+                           th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"
+                           placeholder="John Doe" required/>
+                    <div class="invalid-feedback" th:errors="*{name}"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input type="email" th:field="*{email}" class="form-control"
+                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"
+                           placeholder="you@example.com" required/>
+                    <div class="invalid-feedback" th:errors="*{email}"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" th:field="*{password}" class="form-control"
+                           th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                           placeholder="Min. 6 characters" required/>
+                    <div class="invalid-feedback" th:errors="*{password}"></div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">I want to join as</label>
+                <div class="role-selector">
+                    <label class="role-option">
+                        <input type="radio" th:field="*{role}" value="CLIENT" required/>
+                        <div class="role-card">
+                            <i class="bi bi-briefcase-fill"></i>
+                            <span>Client</span>
+                            <small>Post projects &amp; hire</small>
+                        </div>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" th:field="*{role}" value="FREELANCER"/>
+                        <div class="role-card">
+                            <i class="bi bi-laptop"></i>
+                            <span>Freelancer</span>
+                            <small>Find work &amp; earn</small>
+                        </div>
+                    </label>
+                </div>
+                <div class="text-danger small mt-1" th:errors="*{role}"></div>
+            </div>
+            <button type="submit" id="registerBtn" class="btn btn-primary w-100 btn-auth">
+                <i class="bi bi-person-plus me-2"></i>Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Already have an account?
+            <a th:href="@{/login}" class="auth-link">Sign in</a>
+        </div>
+    </div>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

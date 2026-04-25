@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Admin — All Users')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">All Users</h1>
+                <p class="page-subtitle">Total: <span th:text="${#lists.size(users)}"></span> users</p>
+            </div>
+        </div>
+        <div class="section-card">
+            <div class="table-responsive">
+                <table class="table table-hover freelix-table" id="usersTable">
+                    <thead>
+                        <tr><th>#</th><th>Name</th><th>Email</th><th>Role</th>
+                            <th>Rating</th><th>Joined</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="u, iter : ${users}">
+                            <td th:text="${iter.count}"></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img th:if="${u.profileImageUrl}" th:src="${u.profileImageUrl}"
+                                         style="width:32px;height:32px;border-radius:50%;object-fit:cover" alt=""/>
+                                    <div th:unless="${u.profileImageUrl}" class="avatar-circle avatar-sm"
+                                         th:text="${u.name.substring(0,1)}"></div>
+                                    <span th:text="${u.name}"></span>
+                                </div>
+                            </td>
+                            <td th:text="${u.email}"></td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${u.role.name() == 'CLIENT'} ? 'bg-primary' :
+                                                      (${u.role.name() == 'FREELANCER'} ? 'bg-warning text-dark' : 'bg-danger')"
+                                      th:text="${u.role}"></span>
+                            </td>
+                            <td>
+                                <span th:if="${u.averageRating > 0}">
+                                    ⭐ <span th:text="${u.averageRating}"></span>
+                                </span>
+                                <span th:unless="${u.averageRating > 0}" class="text-muted">—</span>
+                            </td>
+                            <td><small th:text="${#temporals.format(u.createdAt, 'dd MMM yyyy')}"></small></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

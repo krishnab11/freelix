@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Profile')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+
+        <!-- Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Freelancer Profile</h1>
+                <p class="page-subtitle">Review their work, skills, and ratings before hiring</p>
+            </div>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Left column: identity + skills -->
+            <div class="col-lg-4">
+                <div class="section-card text-center">
+                    <!-- Avatar -->
+                    <div class="mb-3">
+                        <img th:if="${target.profileImageUrl != null}"
+                             th:src="${target.profileImageUrl}"
+                             class="rounded-circle border" style="width:110px;height:110px;object-fit:cover;" alt="Avatar"/>
+                        <div th:unless="${target.profileImageUrl != null}"
+                             class="avatar-circle mx-auto"
+                             style="width:110px;height:110px;font-size:2.5rem;line-height:110px;"
+                             th:text="${target.name.substring(0,1).toUpperCase()}"></div>
+                    </div>
+                    <h3 class="fw-bold mb-1" th:text="${target.name}"></h3>
+                    <p class="text-muted mb-2" th:text="${target.location != null ? '📍 ' + target.location : ''}"></p>
+
+                    <!-- Star rating -->
+                    <div class="mb-2">
+                        <span th:each="i : ${#numbers.sequence(1,5)}">
+                            <i class="bi" th:classappend="${i <= target.averageRating} ? 'bi-star-fill text-warning' : 'bi-star text-muted'"></i>
+                        </span>
+                        <span class="ms-1 fw-semibold" th:text="${#numbers.formatDecimal(target.averageRating,1,1)}"></span>
+                        <span class="text-muted ms-1">(<span th:text="${target.totalReviews}"></span> reviews)</span>
+                    </div>
+
+                    <!-- Member since -->
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        Member since <span th:text="${#temporals.format(target.createdAt, 'MMM yyyy')}"></span>
+                    </p>
+
+                    <!-- Contact info -->
+                    <div th:if="${target.phone != null}" class="mb-1">
+                        <i class="bi bi-telephone me-1"></i><span th:text="${target.phone}"></span>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="section-card mt-3" th:if="${target.skills != null}">
+                    <h6 class="section-title mb-3"><i class="bi bi-tags me-2"></i>Skills</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span th:each="skill : ${#strings.arraySplit(target.skills, ',')}"
+                              class="badge rounded-pill"
+                              style="background:rgba(99,102,241,.12);color:var(--primary);font-size:.82rem;padding:.4em .9em"
+                              th:text="${#strings.trim(skill)}"></span>
+                    </div>
+                </div>
+
+                <!-- Files / Portfolio -->
+                <div class="section-card mt-3" th:if="${!#lists.isEmpty(files)}">
+                    <h6 class="section-title mb-3"><i class="bi bi-folder2-open me-2"></i>Portfolio &amp; Files</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li th:each="f : ${files}" class="mb-2">
+                            <a th:href="${f.cloudinaryUrl}" target="_blank" class="d-flex align-items-center gap-2 text-decoration-none">
+                                <i class="bi" th:classappend="${f.fileType.name() == 'RESUME'} ? 'bi-file-earmark-pdf text-danger' :
+                                                               (${f.fileType.name() == 'CERTIFICATE'} ? 'bi-award text-warning' : 'bi-image text-info')"></i>
+                                <span th:text="${f.fileName}" class="text-muted small"></span>
+                                <i class="bi bi-box-arrow-up-right text-muted ms-auto" style="font-size:.7rem"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right column: bio + reviews + past work -->
+            <div class="col-lg-8">
+
+                <!-- Bio -->
+                <div class="section-card" th:if="${target.bio != null}">
+                    <h6 class="section-title mb-3"><i class="bi bi-person-lines-fill me-2"></i>About</h6>
+                    <p style="line-height:1.7;" th:text="${target.bio}"></p>
+                </div>
+
+                <!-- Past Projects -->
+                <div class="section-card mt-3" th:if="${!#lists.isEmpty(completedProjects)}">
+                    <h6 class="section-title mb-3"><i class="bi bi-briefcase me-2"></i>Past Work</h6>
+                    <div class="row g-3">
+                        <div th:each="p : ${completedProjects}" class="col-md-6">
+                            <div class="card h-100" style="border:1px solid var(--border-color);border-radius:.75rem;background:var(--surface-color)">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <h6 class="card-title mb-0 fw-semibold" th:text="${p.title}"></h6>
+                                        <span class="badge"
+                                              th:classappend="${p.status.name() == 'PAID'} ? 'bg-success' : 'bg-secondary'"
+                                              th:text="${p.status.name()}"></span>
+                                    </div>
+                                    <p class="card-text text-muted small"
+                                       th:text="${#strings.abbreviate(p.description, 80)}"></p>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span th:if="${p.category != null}" class="badge bg-secondary" th:text="${p.category}"></span>
+                                        <span class="text-muted small"><i class="bi bi-currency-rupee"></i><span th:text="${p.budget}"></span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews -->
+                <div class="section-card mt-3">
+                    <h6 class="section-title mb-3"><i class="bi bi-star-half me-2"></i>Reviews (<span th:text="${#lists.size(reviews)}"></span>)</h6>
+                    <div th:if="${#lists.isEmpty(reviews)}" class="text-muted py-3 text-center">
+                        No reviews yet for this freelancer.
+                    </div>
+                    <div th:each="r : ${reviews}" class="review-card mb-3 p-3"
+                         style="border:1px solid var(--border-color);border-radius:.75rem;background:var(--surface-color)">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="fw-semibold" th:text="${r.client.name}"></div>
+                            <div>
+                                <span th:each="i : ${#numbers.sequence(1,5)}">
+                                    <i class="bi" th:classappend="${i <= r.rating} ? 'bi-star-fill text-warning' : 'bi-star text-muted'" style="font-size:.85rem"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="mb-1" style="font-size:.92rem" th:text="${r.feedback}"></p>
+                        <small class="text-muted" th:text="${#temporals.format(r.createdAt, 'MMM d, yyyy')}"></small>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

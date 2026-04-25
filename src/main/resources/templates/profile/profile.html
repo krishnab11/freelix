@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('My Profile')}"></head>
+<body>
+<div class="app-layout">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">My Profile</h1>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="row g-4">
+            <!-- Profile Card -->
+            <div class="col-md-4">
+                <div class="section-card text-center">
+                    <div class="profile-avatar-wrap">
+                        <img th:if="${user.profileImageUrl}" th:src="${user.profileImageUrl}"
+                             class="profile-avatar" alt="Profile Photo"/>
+                        <div th:unless="${user.profileImageUrl}" class="avatar-circle avatar-xl mx-auto"
+                             th:text="${user.name.substring(0,1)}"></div>
+                    </div>
+                    <h4 class="mt-3 mb-0" th:text="${user.name}"></h4>
+                    <p class="text-muted mb-1" th:text="${user.email}"></p>
+                    <span class="badge bg-primary" th:text="${user.role}"></span>
+                    <div th:if="${user.averageRating > 0}" class="mt-2 text-warning">
+                        <i th:each="i : ${#numbers.sequence(1,5)}"
+                           th:class="${i <= user.averageRating} ? 'bi bi-star-fill' : 'bi bi-star'"></i>
+                        <small class="text-muted">(<span th:text="${user.averageRating}"></span>)</small>
+                    </div>
+                    <div th:if="${user.location}" class="mt-2 text-muted small">
+                        <i class="bi bi-geo-alt me-1"></i><span th:text="${user.location}"></span>
+                    </div>
+
+                    <!-- Upload Photo -->
+                    <div class="mt-3">
+                        <form th:action="@{/profile/upload/photo}" method="post" enctype="multipart/form-data">
+                            <label class="btn btn-outline-primary btn-sm w-100">
+                                <i class="bi bi-camera me-1"></i>Change Photo
+                                <input type="file" name="file" accept="image/*" hidden
+                                       onchange="this.form.submit()"/>
+                            </label>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Files Card -->
+                <div class="section-card mt-3">
+                    <h6><i class="bi bi-paperclip me-2"></i>Documents</h6>
+                    <div th:if="${user.resumeUrl}">
+                        <a th:href="${user.resumeUrl}" target="_blank" class="btn btn-sm btn-outline-secondary w-100 mb-2">
+                            <i class="bi bi-file-earmark-person me-1"></i>View Resume
+                        </a>
+                    </div>
+                    <form th:action="@{/profile/upload/resume}" method="post" enctype="multipart/form-data" class="mb-2">
+                        <label class="btn btn-outline-info btn-sm w-100">
+                            <i class="bi bi-upload me-1"></i>Upload Resume
+                            <input type="file" name="file" accept=".pdf,.doc,.docx" hidden onchange="this.form.submit()"/>
+                        </label>
+                    </form>
+                    <form th:action="@{/profile/upload/certificate}" method="post" enctype="multipart/form-data">
+                        <label class="btn btn-outline-success btn-sm w-100">
+                            <i class="bi bi-award me-1"></i>Upload Certificate
+                            <input type="file" name="file" accept=".pdf,.jpg,.png" hidden onchange="this.form.submit()"/>
+                        </label>
+                    </form>
+                    <!-- Uploaded files -->
+                    <div th:unless="${#lists.isEmpty(files)}" class="mt-3">
+                        <small class="text-muted fw-semibold">Uploaded Files:</small>
+                        <div th:each="f : ${files}" class="d-flex justify-content-between align-items-center mt-1">
+                            <small><i class="bi bi-file-earmark me-1"></i><span th:text="${f.fileName}"></span></small>
+                            <a th:href="${f.cloudinaryUrl}" target="_blank" class="btn btn-link btn-sm p-0">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Profile Form -->
+            <div class="col-md-8">
+                <div class="section-card">
+                    <h5><i class="bi bi-pencil-square me-2"></i>Edit Profile</h5>
+                    <form th:action="@{/profile/update}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Full Name</label>
+                            <input type="text" name="name" class="form-control"
+                                   th:value="${user.name}" required/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Bio</label>
+                            <textarea name="bio" class="form-control" rows="4"
+                                      placeholder="Tell clients about yourself..."
+                                      th:text="${user.bio}"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Skills</label>
+                                <input type="text" name="skills" class="form-control"
+                                       th:value="${user.skills}" placeholder="React, Java, Python..."/>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Location</label>
+                                <input type="text" name="location" class="form-control"
+                                       th:value="${user.location}" placeholder="City, Country"/>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Phone</label>
+                            <input type="tel" name="phone" class="form-control"
+                                   th:value="${user.phone}" placeholder="+1 234 567 8900"/>
+                        </div>
+                        <button type="submit" id="updateProfileBtn" class="btn btn-primary px-4">
+                            <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Reviews Section -->
+                <div th:unless="${#lists.isEmpty(reviews)}" class="section-card mt-3">
+                    <h5><i class="bi bi-star-fill text-warning me-2"></i>Reviews Received</h5>
+                    <div th:each="review : ${reviews}" class="review-item">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-semibold" th:text="${review.project.title}"></span>
+                            <div class="text-warning">
+                                <i th:each="i : ${#numbers.sequence(1,5)}"
+                                   th:class="${i <= review.rating} ? 'bi bi-star-fill' : 'bi bi-star'"></i>
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-0" th:text="${review.feedback}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>
