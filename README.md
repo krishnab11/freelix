@@ -14,7 +14,7 @@ A production-ready, full-stack freelancer marketplace built with **Spring Boot**
 ### Run the Application
 
 ```bash
-cd "c:\Users\Admin\Desktop\New folder (2)\freelix"
+cd "c:\Users\Admin\Desktop\freelix"
 mvn spring-boot:run
 ```
 
